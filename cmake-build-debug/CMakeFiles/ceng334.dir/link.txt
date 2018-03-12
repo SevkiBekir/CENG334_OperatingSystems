@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/ceng334.dir/the1.c.o  -o ceng334 
