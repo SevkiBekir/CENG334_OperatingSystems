@@ -3,5 +3,5 @@ project(ceng334)
 
 set(CMAKE_C_STANDARD 11)
 
-set(SOURCE_FILES server.c)
+set(SOURCE_FILES server.c hunter.c)
 add_executable(ceng334 ${SOURCE_FILES})
