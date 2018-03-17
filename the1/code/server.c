@@ -1316,7 +1316,7 @@ int CanMoveNextForPray(int index, ph_message receivingMessageFromPray, Pray pray
 
 
             if (receivingMessageFromPray.move_request.x == printStructs[i].x &&
-                    receivingMessageFromPray.move_request.y == printStructs[i].y &&
+                receivingMessageFromPray.move_request.y == printStructs[i].y &&
                 (printStructs[i].mode == 'X' || printStructs[i].mode == 'P')) {
                 canGoNextStep = 0;
                 break;
@@ -1336,10 +1336,11 @@ int CanMoveNextForPray(int index, ph_message receivingMessageFromPray, Pray pray
 
 }
 
-void checkHunterKillPray(int hunterIndex, Hunter hunter[], Pray pray[], int *praySize, int *killedIndex,
-                         int *counterPraySize, int *counterHunterSize) {
+int checkHunterKillPray(int hunterIndex, Hunter hunter[], Pray pray[], int *praySize, int *killedIndex,
+                        int *counterPraySize, int *counterHunterSize) {
     *killedIndex = -1;
     int isPrayKilled = 0;
+    int killedPrayIndex = -1;
 //    printf("Hunter Info: x:%d, y:%d, e:%d, isLive:%d\n", hunter[hunterIndex].x, hunter[hunterIndex].y,
 //           hunter[hunterIndex].energy, hunter[hunterIndex].isLive);
 
@@ -1348,6 +1349,7 @@ void checkHunterKillPray(int hunterIndex, Hunter hunter[], Pray pray[], int *pra
 //            printf("hunter[%d] => x=%d, y=%d\n",hunterIndex,pray[i].x, pray[i].y);
             pray[i].isLive = 0;
             isPrayKilled = 1;
+            killedPrayIndex = i;
             (*counterPraySize)--;
             hunter[hunterIndex].energy += pray[i].energy;
 //            printf("Hunter captured pray. hE: %d, pE:%d\n", hunter[hunterIndex].energy, pray[i].energy);
@@ -1367,6 +1369,8 @@ void checkHunterKillPray(int hunterIndex, Hunter hunter[], Pray pray[], int *pra
         }
     }
 
+    return killedPrayIndex;
+
 //        printf("Hunter Info: x:%d, y:%d, e:%d, isLive:%d\n", hunter[hunterIndex].x, hunter[hunterIndex].y,
 //           hunter[hunterIndex].energy, hunter[hunterIndex].isLive);
 
@@ -1384,24 +1388,24 @@ int main(int argc, char const *argv[]) {
 //    fp = fopen("inputClosest.txt", "r");
 
 
-    scanf( "%d %d", &mapWidth, &mapHeight);
+    scanf("%d %d", &mapWidth, &mapHeight);
 
 
     scanf("%d", &sizeObstacle);
     Obstacle obstacles[sizeObstacle];
     totalSize = sizeObstacle;
     for (i = 0; i < sizeObstacle; i++) {
-        scanf( "%d %d", &x, &y);
+        scanf("%d %d", &x, &y);
         obstacles[i].x = x;
         obstacles[i].y = y;
 
     }
 
-    scanf( "%d", &sizeHunter);
+    scanf("%d", &sizeHunter);
     Hunter hunters[sizeHunter];
     tempSize = sizeHunter + totalSize;
     for (i = 0; i < sizeHunter; i++) {
-        scanf( "%d %d %d", &x, &y, &e);
+        scanf("%d %d %d", &x, &y, &e);
         hunters[i].x = x;
         hunters[i].y = y;
         hunters[i].energy = e;
@@ -1412,11 +1416,11 @@ int main(int argc, char const *argv[]) {
     totalSize += sizeHunter;
 
 
-    scanf( "%d", &sizePray);
+    scanf("%d", &sizePray);
     Pray prays[sizePray];
     tempSize = sizePray + totalSize;
     for (i = 0; i < sizePray; i++) {
-        scanf( "%d %d %d", &x, &y, &e);
+        scanf("%d %d %d", &x, &y, &e);
         prays[i].x = x;
         prays[i].y = y;
         prays[i].energy = e;
@@ -1458,8 +1462,6 @@ int main(int argc, char const *argv[]) {
     snprintf(str, (size_t) (length + 1), "%d", mapHeight);
     strcat(height, str);
     free(str2);
-
-
 
 
     server_message hunterMessage[sizeHunter];
@@ -1525,7 +1527,7 @@ int main(int argc, char const *argv[]) {
             //it is child;
             fflush(stdout);
             dup2(fdPray[i][1], 0);
-            execl("pray", "pray", width, height, NULL, NULL);
+            execl("prey", "prey", width, height, NULL, NULL);
 
         }
 
@@ -1552,9 +1554,6 @@ int main(int argc, char const *argv[]) {
 
     if (maximum2 > maximum)
         maximum = maximum2;
-
-
-
 
 
     for (i = 0; i < sizeHunter; i++) {
@@ -1596,6 +1595,48 @@ int main(int argc, char const *argv[]) {
                 read(fd[i][0], &receivingMessageFromHunter[i], sizeof(ph_message));
 //                printf("Request Hunter(%d,%d)\n", receivingMessageFromHunter[i].move_request.x,
 //                       receivingMessageFromHunter[i].move_request.y);
+                if (receivingMessageFromHunter[i].move_request.y == -1 &&
+                    receivingMessageFromHunter[i].move_request.x == -1) {
+                    printStructs = (PrintStruct *) realloc(printStructs, (totalSize * sizeof(PrintStruct)));
+
+                    totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter,
+                                                             sizePray,
+                                                             sizeObstacle);
+
+                    sortPrintStructs(printStructs, totalSize);
+                    printAll(printStructs, totalSize);
+
+                    printOutput(mapWidth, mapHeight, printStructs, totalSize);
+
+
+                    hunterMessage[i].pos.x = hunters[i].x;
+                    hunterMessage[i].pos.y = hunters[i].y;
+
+                    int closestIndex = getIndexFromNearestPray(hunters[i], prays, sizePray);
+                    if (closestIndex == -1) {
+                        open[i] = 0;
+                        sizeOpen--;
+                        kill(pid[i], SIGTERM);
+                        waitpid(pid[i], &(childStatus[i]), 0);
+                        printf("Closed Hunter[%d]\n", i);
+                    }
+                    hunterMessage[i].adv_pos.x = prays[closestIndex].x;
+                    hunterMessage[i].adv_pos.y = prays[closestIndex].y;
+
+                    hunterMessage[i].object_count = 0;
+
+                    arrangeObjectPositionFindHunterForHunter(sizeHunter, hunters, hunterMessage, i, mapWidth,
+                                                             mapHeight);
+                    arrangeObjectPositionFindObstacleForHunter(sizeObstacle, hunters, obstacles, hunterMessage, i,
+                                                               mapWidth,
+                                                               mapHeight);
+
+                    fflush(stdout);
+                    write(fd[i][0], &hunterMessage[i], sizeof(server_message));
+
+                    continue;
+                }
+
                 int canMoveAnswer = CanMoveNextForHunter(i, receivingMessageFromHunter[i], hunters, printStructs,
                                                          totalSize);
                 if (canMoveAnswer == 0) {
@@ -1623,7 +1664,7 @@ int main(int argc, char const *argv[]) {
                         sizeOpen--;
                         kill(pid[i], SIGTERM);
                         waitpid(pid[i], &(childStatus[i]), 0);
-                        printf("Closed [%d]\n", i);
+                        printf("Closed Hunter[%d]\n", i);
                     }
                     hunterMessage[i].adv_pos.x = prays[closestIndex].x;
                     hunterMessage[i].adv_pos.y = prays[closestIndex].y;
@@ -1642,15 +1683,23 @@ int main(int argc, char const *argv[]) {
 
 
                 } else {
-                    checkHunterKillPray(i, hunters, prays, &sizePray, &killedIndex, &counterPraySize,
-                                        &counterHunterSize);
+                    int prayKilledIndex = checkHunterKillPray(i, hunters, prays, &sizePray, &killedIndex,
+                                                              &counterPraySize,
+                                                              &counterHunterSize);
+                    if (prayKilledIndex != -1) {
+                        openPray[prayKilledIndex] = 0;
+                        sizeOpenPray--;
+                        kill(pidPray[prayKilledIndex], SIGTERM);
+                        waitpid(pidPray[prayKilledIndex], &(childStatusForPray[prayKilledIndex]), 0);
+                        printf("Closed Pray[%d]\n", prayKilledIndex);
+                    }
 
                     if (killedIndex != -1) {
                         open[killedIndex] = 0;
                         sizeOpen--;
                         kill(pid[killedIndex], SIGTERM);
                         waitpid(pid[killedIndex], &(childStatus[killedIndex]), 0);
-                        printf("Closed [%d]\n", killedIndex);
+                        printf("Closed Hunter[%d]\n", killedIndex);
 
 
                     } else {
@@ -1681,7 +1730,7 @@ int main(int argc, char const *argv[]) {
                             sizeOpen--;
                             kill(pid[i], SIGTERM);
                             waitpid(pid[i], &(childStatus[i]), 0);
-                            printf("Closed [%d]\n", i);
+                            printf("Closed Hunter[%d]\n", i);
                         }
                         hunterMessage[i].adv_pos.x = prays[closestIndex].x;
                         hunterMessage[i].adv_pos.y = prays[closestIndex].y;
@@ -1721,7 +1770,8 @@ int main(int argc, char const *argv[]) {
                 read(fdPray[i][0], &receivingMessageFromPray[i], sizeof(ph_message));
 //                printf("Request (%d,%d)\n", receivingMessageFromPray[i].move_request.x,
 //                       receivingMessageFromPray[i].move_request.y);
-                if(receivingMessageFromPray[i].move_request.y == -1 && receivingMessageFromPray[i].move_request.x == -1){
+                if (receivingMessageFromPray[i].move_request.y == -1 &&
+                    receivingMessageFromPray[i].move_request.x == -1) {
                     printStructs = (PrintStruct *) realloc(printStructs, (totalSize * sizeof(PrintStruct)));
 
                     totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter,
@@ -1744,7 +1794,7 @@ int main(int argc, char const *argv[]) {
                         sizeOpenPray--;
                         kill(pidPray[i], SIGTERM);
                         waitpid(pidPray[i], &(childStatusForPray[i]), 0);
-                        printf("Closed [%d]\n", i);
+                        printf("Closed Pray[%d]\n", i);
                     }
                     prayMessage[i].adv_pos.x = hunters[closestIndex].x;
                     prayMessage[i].adv_pos.y = hunters[closestIndex].y;
@@ -1763,7 +1813,7 @@ int main(int argc, char const *argv[]) {
                     continue;
                 }
                 int canMoveAnswer = CanMoveNextForPray(i, receivingMessageFromPray[i], prays, printStructs,
-                                                         totalSize);
+                                                       totalSize);
                 if (canMoveAnswer == 0 || canMoveAnswer == 1) {
 
 
@@ -1789,7 +1839,7 @@ int main(int argc, char const *argv[]) {
                         sizeOpenPray--;
                         kill(pidPray[i], SIGTERM);
                         waitpid(pidPray[i], &(childStatusForPray[i]), 0);
-                        printf("Closed [%d]\n", i);
+                        printf("Closed Pray[%d]\n", i);
                     }
                     prayMessage[i].adv_pos.x = hunters[closestIndex].x;
                     prayMessage[i].adv_pos.y = hunters[closestIndex].y;
@@ -1815,21 +1865,21 @@ int main(int argc, char const *argv[]) {
 //        printf("sizeOpen=%d, sizeOpenPray=%d, hSize:%d, pSize=%d",sizeOpen,sizeOpenPray,counterHunterSize,counterPraySize);
     }
 
-    for (int j = 0; j < counterHunterSize; ++j) {
+    for (int j = 0; j < sizeHunter; ++j) {
         if (open[j]) {
             open[j] = 0;
             kill(pid[j], SIGTERM);
             waitpid(pid[j], &(childStatus[j]), 0);
-//            printf("All Closed Hunters Check\n --------\nClosed [%d]\n", j);
+            printf("All Closed Hunters Check\n --------\nClosed [%d]\n", j);
         }
     }
 
-    for (int j = 0; j < counterPraySize; ++j) {
+    for (int j = 0; j < sizePray; ++j) {
         if (openPray[j]) {
             openPray[j] = 0;
             kill(pidPray[j], SIGTERM);
             waitpid(pidPray[j], &(childStatusForPray[j]), 0);
-//            printf("All Closed Check\n --------\nClosed [%d]\n", j);
+            printf("All Closed Check\n --------\nClosed [%d]\n", j);
         }
     }
 //    char buff2[255];
