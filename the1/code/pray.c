@@ -44,7 +44,7 @@ void printServerMessage(server_message serverMessage) {
 
 void printPossibleMovements(coordinate possibleCoordinate[]) {
     for (int j = 0; j < 4; ++j) {
-        printf("[Hunter] [%d. Coordinate] = (%d,%d)\n", j, possibleCoordinate[j].x, possibleCoordinate[j].y);
+        printf("[Pray] [%d. Coordinate] = (%d,%d)\n", j, possibleCoordinate[j].x, possibleCoordinate[j].y);
     }
 }
 
@@ -270,7 +270,7 @@ int getShortestPathIndexInPossibleCoordinate(server_message serverMessage, int o
 
 //        printf("TempMD = %d, newMD = %d\n", tempMD, newMD);
 
-        if (tempMD < newMD) {
+        if (tempMD > newMD) {
             newMD = tempMD;
             index = i;
 //            printf("updated index -> %d\n", index);
@@ -289,7 +289,7 @@ int main(int argc, char const *argv[]) {
 //    printf("argc:%d argv:%s %s\n",argc,argv[1],argv[2]);
     int width = atoi(argv[1]);
     int height = atoi(argv[2]);
-//    printf("[Hunter] w:%d, h:%d\n", width, height);
+//    printf("[Pray] w:%d, h:%d\n", width, height);
 
 //    printf("hello boy!\n");
     server_message serverMessage;

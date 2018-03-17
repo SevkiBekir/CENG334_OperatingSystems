@@ -68,11 +68,27 @@ int getIndexFromNearestPray(Hunter hunter, Pray prays[], int praySize) {
     int minimum = INT_MAX;
     int closestIndex = -1;
     for (int i = 0; i < praySize; ++i) {
-        if(!prays[i].isLive)
+        if (!prays[i].isLive)
             continue;
         int calculate = calculateManhattenDisctance(hunter.x, hunter.y, prays[i].x, prays[i].y);
         if (minimum > calculate) {
             minimum = calculate;
+            closestIndex = i;
+        }
+    }
+    return closestIndex;
+}
+
+
+int getIndexFromNearestHunter(Pray pray, Hunter hunter[], int hunterSize) {
+    int maximum = 0;
+    int closestIndex = -1;
+    for (int i = 0; i < hunterSize; ++i) {
+        if (!hunter[i].isLive)
+            continue;
+        int calculate = calculateManhattenDisctance(hunter[i].x, hunter[i].y, pray.x, pray.y);
+        if (maximum < calculate) {
+            maximum = calculate;
             closestIndex = i;
         }
     }
@@ -373,6 +389,288 @@ void arrangeObjectPositionFindObstacleForHunter(int sizeObstacle, Hunter hunters
     }
 }
 
+
+void arrangeObjectPositionFindObstacleForPray(int sizeObstacle, Pray prays[], Obstacle obstacles[],
+                                              server_message prayMessage[], int prayMessageIndex, int mapWidth,
+                                              int mapHeight) {
+    int j, i = prayMessageIndex;
+    for (j = 0; j < sizeObstacle; ++j) {
+        /*
+         *    (x-1,y) -> X
+         *  (x,y-1) -> X H X <- (x,y+1)
+         *    (x+1,y) -> X
+         *
+         *    first corner check,
+         *    second top, left, bottom, right check
+         *    ow check middle
+         */
+
+
+        if (!(prays[j].isLive))
+            continue;
+        /*
+         *  sol üst köşe
+         *  +--
+         *  |HX
+         *  |X
+         */
+        if (prays[i].x - 1 < 0 && prays[i].y - 1 < 0) {
+            if (prays[i].y + 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x + 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+            /*
+             *  sağ üst köşe
+             *  --+
+             *  XH|
+             *   X|
+             */
+        else if (prays[i].y + 1 == mapWidth && prays[i].x - 1 < 0) {
+            if (prays[i].y - 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x + 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+            /*
+             *  sağ alt köşe
+             *   X|
+             *  XH|
+             *  --+
+             */
+        else if (prays[i].y + 1 == mapWidth && prays[i].x + 1 == mapHeight) {
+            if (prays[i].y - 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+
+            /*
+             *  sol alt köşe
+             *  |X
+             *  |HX
+             *  +--
+             */
+        else if (prays[i].y - 1 < 0 && prays[i].x + 1 == mapHeight) {
+            if (prays[i].y + 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+            /*
+                 *  sol kenar
+                 *  |X
+                 *  |HX
+                 *  |X
+                 */
+        else if (prays[i].y - 1 < 0) {
+            if (prays[i].y + 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+
+            if (prays[i].x + 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+
+        }
+
+            /*
+                    *  üst kenar
+                    *  ---
+                    *  XHX
+                    *   X
+                    */
+        else if (prays[i].x - 1 < 0) {
+            if (prays[i].y + 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+        }
+
+            /*
+                  *  sağ kenar
+                  *   X|
+                  *  XH|
+                  *   X|
+                  */
+        else if (prays[i].y + 1 == mapWidth) {
+
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+
+            if (prays[i].x + 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+        }
+
+            /*
+                    *  alt kenar
+                    *   X
+                    *  XHX
+                    *  ---
+                    */
+        else if (prays[i].x + 1 == mapHeight) {
+
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].y + 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+        } else {
+
+            if (prays[i].x - 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+
+            if (prays[i].x + 1 == obstacles[j].x && prays[i].y == obstacles[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].y + 1 == obstacles[j].y && prays[i].x == obstacles[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = obstacles[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = obstacles[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+        }
+
+
+    }
+}
+
 void arrangeObjectPositionFindHunterForHunter(int sizeHunter, Hunter hunters[], server_message hunterMessage[],
                                               int hunterMessageIndex, int mapWidth, int mapHeight) {
     int i = hunterMessageIndex, j;
@@ -653,6 +951,286 @@ void arrangeObjectPositionFindHunterForHunter(int sizeHunter, Hunter hunters[], 
     }
 };
 
+void arrangeObjectPositionFindPrayForPray(int sizePray, Pray prays[], server_message prayMessage[],
+                                          int prayMessageIndex, int mapWidth, int mapHeight) {
+    int i = prayMessageIndex, j;
+    for (j = 0; j < sizePray; ++j) {
+        /*
+         *    (x-1,y) -> X
+         *  (x,y-1) -> X H X <- (x,y+1)
+         *    (x+1,y) -> X
+         *
+         *    first corner check,
+         *    second top, left, bottom, right check
+         *    ow check middle
+         */
+
+        /*
+         *  sol üst köşe
+         *  +--
+         *  |HX
+         *  |X
+         */
+
+        if (!(prays[j].isLive))
+            continue;
+        if (prays[i].x - 1 < 0 && prays[i].y - 1 < 0) {
+            if (prays[i].y + 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x + 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+            /*
+             *  sağ üst köşe
+             *  --+
+             *  XH|
+             *   X|
+             */
+        else if (prays[i].y + 1 == mapWidth && prays[i].x - 1 < 0) {
+            if (prays[i].y - 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x + 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+            /*
+             *  sağ alt köşe
+             *   X|
+             *  XH|
+             *  --+
+             */
+        else if (prays[i].y + 1 == mapWidth && prays[i].x + 1 == mapHeight) {
+            if (prays[i].y - 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+
+            /*
+             *  sol alt köşe
+             *  |X
+             *  |HX
+             *  +--
+             */
+        else if (prays[i].y - 1 < 0 && prays[i].x + 1 == mapHeight) {
+            if (prays[i].y + 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+        }
+
+            /*
+                 *  sol kenar
+                 *  |X
+                 *  |HX
+                 *  |X
+                 */
+        else if (prays[i].y - 1 < 0) {
+            if (prays[i].y + 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+
+            if (prays[i].x + 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+
+        }
+
+            /*
+                    *  üst kenar
+                    *  ---
+                    *  XHX
+                    *   X
+                    */
+        else if (prays[i].x - 1 < 0) {
+            if (prays[i].y + 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+        }
+
+            /*
+                  *  sağ kenar
+                  *   X|
+                  *  XH|
+                  *   X|
+                  */
+        else if (prays[i].y + 1 == mapWidth) {
+
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+
+            if (prays[i].x + 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+        }
+
+            /*
+                    *  alt kenar
+                    *   X
+                    *  XHX
+                    *  ---
+                    */
+        else if (prays[i].x + 1 == mapHeight) {
+
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].y + 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+        } else {
+
+            if (prays[i].x - 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+
+            if (prays[i].x + 1 == prays[j].x && prays[i].y == prays[j].y) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+
+            }
+
+            if (prays[i].y - 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+
+            if (prays[i].y + 1 == prays[j].y && prays[i].x == prays[j].x) {
+                prayMessage[i].object_pos[prayMessage[i].object_count].x = prays[j].x;
+                prayMessage[i].object_pos[prayMessage[i].object_count].y = prays[j].y;
+                prayMessage[i].object_count++;
+                continue;
+            }
+        }
+
+
+    }
+};
+
 int
 getSizeAndArrangePrintStruct(PrintStruct *printStructs, Hunter *hunters, Obstacle *obstacles, Pray *prays,
                              int sizeHunter,
@@ -673,7 +1251,7 @@ getSizeAndArrangePrintStruct(PrintStruct *printStructs, Hunter *hunters, Obstacl
             printStructs[printStructIndex].mode = 'H';
             printStructIndex++;
         }
-        printf("hunter[%d] isLive:%d\n",i,hunters[i].isLive);
+//        printf("hunter[%d] isLive:%d\n", i, hunters[i].isLive);
     }
 
     for (i = 0; i < sizePray; i++) {
@@ -698,9 +1276,12 @@ int CanMoveNextForHunter(int index, ph_message receivingMessageFromHunter, Hunte
                 /*
                  * engel var mı yok mu kontrol et.
                  */
+
+
+
                 if (receivingMessageFromHunter.move_request.x == printStructs[i].x &&
                     receivingMessageFromHunter.move_request.y == printStructs[i].y &&
-                    (printStructs[i].x == 'X' || printStructs[i].x == 'H')) {
+                    (printStructs[i].mode == 'X' || printStructs[i].mode == 'H')) {
                     canGoNextStep = 0;
                     break;
                 } else
@@ -713,7 +1294,6 @@ int CanMoveNextForHunter(int index, ph_message receivingMessageFromHunter, Hunte
                 hunters[index].y = receivingMessageFromHunter.move_request.y;
 
 
-
             }
         }
     }
@@ -722,32 +1302,73 @@ int CanMoveNextForHunter(int index, ph_message receivingMessageFromHunter, Hunte
 
 }
 
-void checkHunterKillPray(int hunterIndex, Hunter hunter[], Pray pray[],int *praySize, int *killedIndex, int *counterPraySize, int *counterHunterSize){
+int CanMoveNextForPray(int index, ph_message receivingMessageFromPray, Pray pray[], PrintStruct printStructs[],
+                       int totalSize) {
+    int canGoNextStep = -1;
+    if (pray[index].isLive) {
+
+
+        for (int i = 0; i < totalSize; ++i) {
+            /*
+             * engel var mı yok mu kontrol et.
+             */
+
+
+
+            if (receivingMessageFromPray.move_request.x == printStructs[i].x &&
+                    receivingMessageFromPray.move_request.y == printStructs[i].y &&
+                (printStructs[i].mode == 'X' || printStructs[i].mode == 'P')) {
+                canGoNextStep = 0;
+                break;
+            } else
+                canGoNextStep = 1;
+        }
+        if (canGoNextStep == 1) {
+            //hareket ettir.
+            pray[index].x = receivingMessageFromPray.move_request.x;
+            pray[index].y = receivingMessageFromPray.move_request.y;
+
+
+        }
+    }
+
+    return canGoNextStep;
+
+}
+
+void checkHunterKillPray(int hunterIndex, Hunter hunter[], Pray pray[], int *praySize, int *killedIndex,
+                         int *counterPraySize, int *counterHunterSize) {
     *killedIndex = -1;
     int isPrayKilled = 0;
-    printf("Hunter Info: x:%d, y:%d, e:%d, isLive:%d\n",hunter[hunterIndex].x,hunter[hunterIndex].y,hunter[hunterIndex].energy,hunter[hunterIndex].isLive);
+//    printf("Hunter Info: x:%d, y:%d, e:%d, isLive:%d\n", hunter[hunterIndex].x, hunter[hunterIndex].y,
+//           hunter[hunterIndex].energy, hunter[hunterIndex].isLive);
 
     for (int i = 0; i < *praySize; ++i) {
-        if(hunter[hunterIndex].x == pray[i].x && hunter[hunterIndex].y == pray[i].y){
+        if (hunter[hunterIndex].x == pray[i].x && hunter[hunterIndex].y == pray[i].y && pray[i].isLive) {
+//            printf("hunter[%d] => x=%d, y=%d\n",hunterIndex,pray[i].x, pray[i].y);
             pray[i].isLive = 0;
             isPrayKilled = 1;
             (*counterPraySize)--;
-            hunter[hunterIndex].energy +=pray[i].energy;
-            printf("Hunter captured pray. hE: %d, pE:%d\n",hunter[hunterIndex].energy,pray[i].energy);
+            hunter[hunterIndex].energy += pray[i].energy;
+//            printf("Hunter captured pray. hE: %d, pE:%d\n", hunter[hunterIndex].energy, pray[i].energy);
             break;
         }
     }
-    printf("Hunter Info-BeforeEnergyControl: x:%d, y:%d, e:%d, isLive:%d\n",hunter[hunterIndex].x,hunter[hunterIndex].y,hunter[hunterIndex].energy,hunter[hunterIndex].isLive);
+//    printf("Hunter Info-BeforeEnergyControl: x:%d, y:%d, e:%d, isLive:%d\n", hunter[hunterIndex].x,
+//           hunter[hunterIndex].y, hunter[hunterIndex].energy, hunter[hunterIndex].isLive);
 
     // eğer geldiği yerde pray yoksa o zaman prayin enerjisi 0 ise öldür.
-    if(!isPrayKilled){
-        if(hunter[hunterIndex].energy == 0){
-            printf("[%d]Hunter die!\n",hunterIndex);
+    if (!isPrayKilled) {
+        if (hunter[hunterIndex].energy == 0) {
+//            printf("[%d]Hunter die!\n", hunterIndex);
             hunter[hunterIndex].isLive = 0;
             (*counterHunterSize)--;
             (*killedIndex) = hunterIndex;
         }
     }
+
+//        printf("Hunter Info: x:%d, y:%d, e:%d, isLive:%d\n", hunter[hunterIndex].x, hunter[hunterIndex].y,
+//           hunter[hunterIndex].energy, hunter[hunterIndex].isLive);
 
 }
 
@@ -756,60 +1377,51 @@ int main(int argc, char const *argv[]) {
     int mapWidth, mapHeight;
     int sizeObstacle = 0, sizeHunter = 0, sizePray = 0, i, x, y, e, totalSize = 0;
     PrintStruct *printStructs;
-    FILE *fp;
+//    FILE *fp;
     char buff[255];
     int tempSize, totalLive = 0;
 
-    fp = fopen("inputClosest.txt", "r");
+//    fp = fopen("inputClosest.txt", "r");
 
 
-    fscanf(fp, "%d %d", &mapWidth, &mapHeight);
+    scanf( "%d %d", &mapWidth, &mapHeight);
 
 
-    fscanf(fp, "%d", &sizeObstacle);
+    scanf("%d", &sizeObstacle);
     Obstacle obstacles[sizeObstacle];
     totalSize = sizeObstacle;
-//    printStructs = (PrintStruct *) malloc(99999 * sizeof(PrintStruct));
     for (i = 0; i < sizeObstacle; i++) {
-        fscanf(fp, "%d %d", &x, &y);
+        scanf( "%d %d", &x, &y);
         obstacles[i].x = x;
         obstacles[i].y = y;
-//        printStructs[i].x = x;
-//        printStructs[i].y = y;
-//        printStructs[i].mode = 'X';
+
     }
 
-    fscanf(fp, "%d", &sizeHunter);
+    scanf( "%d", &sizeHunter);
     Hunter hunters[sizeHunter];
     tempSize = sizeHunter + totalSize;
-//    printStructs = (PrintStruct *) realloc(printStructs, (tempSize * sizeof(PrintStruct)));
     for (i = 0; i < sizeHunter; i++) {
-        fscanf(fp, "%d %d %d", &x, &y, &e);
+        scanf( "%d %d %d", &x, &y, &e);
         hunters[i].x = x;
         hunters[i].y = y;
         hunters[i].energy = e;
         hunters[i].isLive = 1;
-//        printStructs[i + totalSize].x = x;
-//        printStructs[i + totalSize].y = y;
-//        printStructs[i + totalSize].mode = 'H';
+
         totalLive++;
     }
     totalSize += sizeHunter;
 
 
-    fscanf(fp, "%d", &sizePray);
+    scanf( "%d", &sizePray);
     Pray prays[sizePray];
     tempSize = sizePray + totalSize;
-//    printStructs = (PrintStruct *) realloc(printStructs, (tempSize * sizeof(PrintStruct)));
     for (i = 0; i < sizePray; i++) {
-        fscanf(fp, "%d %d %d", &x, &y, &e);
+        scanf( "%d %d %d", &x, &y, &e);
         prays[i].x = x;
         prays[i].y = y;
         prays[i].energy = e;
         prays[i].isLive = 1;
-//        printStructs[i + totalSize].x = x;
-//        printStructs[i + totalSize].y = y;
-//        printStructs[i + totalSize].mode = 'P';
+
         totalLive++;
     }
 
@@ -826,37 +1438,12 @@ int main(int argc, char const *argv[]) {
 
     printOutput(mapWidth, mapHeight, printStructs, totalSize);
 
-    fclose(fp);
+//    fclose(fp);
 
 
-//        pid_t pid[sizeHunter];
-//        for (i = 0; i < sizeHunter; ++i) {
-//            pid[i] = fork();
-//            if(pid[i]){
-//                //it's child
-//                execl("hunter","hunter",NULL,NULL);
-//
-//            }
-//
-//        }
 
     printf("it's starting\n");
-//
-//        pid_t pid;
-//        int fd[2];
-//        PIPE(fd);
-//        pid = fork();
-//        if (pid==0) {
-//            //it is child;
-//            fflush(stdout);
-//            dup2(fd[1], 1);
-//            dup2(fd[1], 0);
-//            execl("hunter", "hunter", NULL, NULL);
-//
-//        }
-//            printf("it's parent\n");
-//            ssize_t n = read(fd[0], buff, 255);
-//            write(0, buff, n);
+
 
     char width[50] = "";
     int length = snprintf(NULL, 0, "%d", mapWidth);
@@ -873,10 +1460,10 @@ int main(int argc, char const *argv[]) {
     free(str2);
 
 
-//    printf("w:%s h:%s\n",width,height);
 
 
     server_message hunterMessage[sizeHunter];
+    server_message prayMessage[sizePray];
     for (i = 0; i < sizeHunter; i++) {
         hunterMessage[i].pos.x = hunters[i].x;
         hunterMessage[i].pos.y = hunters[i].y;
@@ -892,12 +1479,31 @@ int main(int argc, char const *argv[]) {
                                                    mapHeight);
 
 
-//        printServerMessage(hunterMessage[i]);
+    }
+
+    for (i = 0; i < sizePray; i++) {
+        prayMessage[i].pos.x = prays[i].x;
+        prayMessage[i].pos.y = prays[i].y;
+
+        int closestIndex = getIndexFromNearestHunter(prays[i], hunters, sizeHunter);
+        prayMessage[i].adv_pos.x = hunters[closestIndex].x;
+        prayMessage[i].adv_pos.y = hunters[closestIndex].y;
+
+        prayMessage[i].object_count = 0;
+
+
+        arrangeObjectPositionFindPrayForPray(sizePray, prays, prayMessage, i, mapWidth, mapHeight);
+        arrangeObjectPositionFindObstacleForPray(sizeObstacle, prays, obstacles, prayMessage, i, mapWidth,
+                                                 mapHeight);
+
+
     }
 
 
     pid_t pid[sizeHunter];
+    pid_t pidPray[sizePray];
     int fd[sizeHunter][2];
+    int fdPray[sizePray][2];
     for (i = 0; i < sizeHunter; i++) {
         PIPE(fd[i]);
         pid[i] = fork();
@@ -912,154 +1518,318 @@ int main(int argc, char const *argv[]) {
 
     }
 
+    for (i = 0; i < sizePray; i++) {
+        PIPE(fdPray[i]);
+        pidPray[i] = fork();
+        if (pidPray[i] == 0) {
+            //it is child;
+            fflush(stdout);
+            dup2(fdPray[i][1], 0);
+            execl("pray", "pray", width, height, NULL, NULL);
+
+        }
+
+
+    }
+
 
     fd_set readset;
     int open[sizeHunter];
+    int openPray[sizePray];
     int sizeOpen = sizeHunter;
+    int sizeOpenPray = sizePray;
     for (i = 0; i < sizeHunter; i++) {
         open[i] = 1;
     }
 
+    for (i = 0; i < sizePray; i++) {
+        openPray[i] = 1;
+    }
     int childStatus[sizeHunter];
+    int childStatusForPray[sizePray];
     int maximum = getMaximumFileDescriptor(fd, sizeHunter);
-//    printf("max:%d",maximum);
+    int maximum2 = getMaximumFileDescriptor(fdPray, sizePray);
+
+    if (maximum2 > maximum)
+        maximum = maximum2;
+
+
 
 
 
     for (i = 0; i < sizeHunter; i++) {
 
-
-//
-//        char msj[50] = "Server-";
-//        int length = snprintf(NULL, 0, "%d", i);
-//        char *str = malloc((size_t) (length + 1));
-//        snprintf(str, (size_t) (length + 1), "%d", i);
-//        strcat(msj, str);
-
-//        write(fd[i][0], msj, 9);
-//        if (i == 2)
         write(fd[i][0], &hunterMessage[i], sizeof(server_message));
     }
 
+    for (i = 0; i < sizePray; i++) {
+
+        write(fdPray[i][0], &prayMessage[i], sizeof(server_message));
+    }
+
     ph_message receivingMessageFromHunter[sizeHunter];
+    ph_message receivingMessageFromPray[sizePray];
 
     int counterPraySize = sizePray;
-    int counterHunterSize= sizeHunter;
+    int counterHunterSize = sizeHunter;
 
-    while (sizeOpen > 0 && counterHunterSize > 0 && counterPraySize > 0) {
+    while (sizeOpen > 0 && sizeOpenPray > 0 && counterHunterSize > 0 && counterPraySize > 0) {
         FD_ZERO(&readset);
         for (i = 0; i < sizeHunter; i++) {
             if (open[i])
                 FD_SET(fd[i][0], &readset);
 
         }
+
+        for (i = 0; i < sizePray; i++) {
+            if (openPray[i])
+                FD_SET(fdPray[i][0], &readset);
+
+        }
         select(maximum, &readset, NULL, NULL, NULL);  /* no wset, eset, timeout */
         for (i = 0; i < sizeHunter; i++) {
             if (FD_ISSET(fd[i][0], &readset)) {
 
-//
-//                ssize_t n = read(fd[i][0], buff, 255);
-//                printf("%s", buff);
-//
-//                char msj[50] = "Server-";
-//                int length = snprintf( NULL, 0, "%d", i );
-//                char* str = malloc((size_t) (length + 1));
-//                snprintf(str, (size_t) (length + 1), "%d", i );
-//                strcat(msj,str);
-//
-//                write(fd[i][0], msj, 9);
 
-                printf("--------BEGIN [%d]-------\n",i);
+//                printf("--------BEGIN HUNTER [%d]-------\n", i);
                 int killedIndex = -1;
                 read(fd[i][0], &receivingMessageFromHunter[i], sizeof(ph_message));
-                printf("Request (%d,%d)\n",receivingMessageFromHunter[i].move_request.x,receivingMessageFromHunter[i].move_request.y);
-                CanMoveNextForHunter(i,receivingMessageFromHunter[i],hunters,printStructs,totalSize);
-                checkHunterKillPray(i,hunters,prays,&sizePray,&killedIndex,&counterPraySize,&counterHunterSize);
-
-                printf("Hunter Size -> %d\n",sizeHunter);
-                if(killedIndex != -1){
-                    open[killedIndex] = 0;
-                    sizeOpen--;
-                    kill(pid[killedIndex],SIGTERM);
-                    waitpid(pid[killedIndex],&(childStatus[killedIndex]),0);
-                    printf("Closed [%d]\n",killedIndex);
+//                printf("Request Hunter(%d,%d)\n", receivingMessageFromHunter[i].move_request.x,
+//                       receivingMessageFromHunter[i].move_request.y);
+                int canMoveAnswer = CanMoveNextForHunter(i, receivingMessageFromHunter[i], hunters, printStructs,
+                                                         totalSize);
+                if (canMoveAnswer == 0) {
 
 
-                }else{
                     printStructs = (PrintStruct *) realloc(printStructs, (totalSize * sizeof(PrintStruct)));
 
-                    int oldTotalSize = totalSize;
-                    totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter, sizePray,
+                    totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter,
+                                                             sizePray,
                                                              sizeObstacle);
 
 
                     sortPrintStructs(printStructs, totalSize);
-//                if(oldTotalSize != totalSize){
                     printAll(printStructs, totalSize);
 
                     printOutput(mapWidth, mapHeight, printStructs, totalSize);
-//                }
-
 
 
                     hunterMessage[i].pos.x = hunters[i].x;
                     hunterMessage[i].pos.y = hunters[i].y;
 
-                    /*
-                     * burayı değiştir.
-                     */
                     int closestIndex = getIndexFromNearestPray(hunters[i], prays, sizePray);
-                    if(closestIndex ==-1){
+                    if (closestIndex == -1) {
                         open[i] = 0;
                         sizeOpen--;
-                        kill(pid[i],SIGTERM);
-                        waitpid(pid[i],&(childStatus[i]),0);
-                        printf("Closed [%d]\n",i);
+                        kill(pid[i], SIGTERM);
+                        waitpid(pid[i], &(childStatus[i]), 0);
+                        printf("Closed [%d]\n", i);
                     }
                     hunterMessage[i].adv_pos.x = prays[closestIndex].x;
                     hunterMessage[i].adv_pos.y = prays[closestIndex].y;
 
                     hunterMessage[i].object_count = 0;
 
-                    arrangeObjectPositionFindHunterForHunter(sizeHunter, hunters, hunterMessage, i, mapWidth, mapHeight);
-                    arrangeObjectPositionFindObstacleForHunter(sizeObstacle, hunters, obstacles, hunterMessage, i, mapWidth,
+                    arrangeObjectPositionFindHunterForHunter(sizeHunter, hunters, hunterMessage, i, mapWidth,
+                                                             mapHeight);
+                    arrangeObjectPositionFindObstacleForHunter(sizeObstacle, hunters, obstacles, hunterMessage, i,
+                                                               mapWidth,
                                                                mapHeight);
 
-                    printServerMessage(hunterMessage[i]);
-                    printf("--------END [%d]-------\n",i);
-
-
-//                printf("[Server] ReceivingMessage->%d, x->%d, y->%d", i, receivingMessageFromHunter[i].move_request.x,receivingMessageFromHunter[i].move_request.y);
-
-//                if (server_message1[i].pos.x <= 10 && (i == 0)) {
-//
-//                    printf("[first] Server->%d, x->%d, y->%d\n", i, server_message1[i].pos.x, server_message1[i].pos.y);
-////                    server_message1.pos.y++;
-//                    server_message1[i].pos.x++;
-//                    printf("[inc] Server->%d, x->%d, y->%d\n", i, server_message1[i].pos.x, server_message1[i].pos.y);
-//                }
-
-
+//                    printServerMessage(hunterMessage[i]);
                     fflush(stdout);
                     write(fd[i][0], &hunterMessage[i], sizeof(server_message));
 
-                }
 
+                } else {
+                    checkHunterKillPray(i, hunters, prays, &sizePray, &killedIndex, &counterPraySize,
+                                        &counterHunterSize);
+
+                    if (killedIndex != -1) {
+                        open[killedIndex] = 0;
+                        sizeOpen--;
+                        kill(pid[killedIndex], SIGTERM);
+                        waitpid(pid[killedIndex], &(childStatus[killedIndex]), 0);
+                        printf("Closed [%d]\n", killedIndex);
+
+
+                    } else {
+                        printStructs = (PrintStruct *) realloc(printStructs, (totalSize * sizeof(PrintStruct)));
+
+                        totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter,
+                                                                 sizePray,
+                                                                 sizeObstacle);
+
+
+                        sortPrintStructs(printStructs, totalSize);
+                        printAll(printStructs, totalSize);
+
+                        printOutput(mapWidth, mapHeight, printStructs, totalSize);
+//                }
+
+
+
+                        hunterMessage[i].pos.x = hunters[i].x;
+                        hunterMessage[i].pos.y = hunters[i].y;
+
+                        /*
+                         * burayı değiştir.
+                         */
+                        int closestIndex = getIndexFromNearestPray(hunters[i], prays, sizePray);
+                        if (closestIndex == -1) {
+                            open[i] = 0;
+                            sizeOpen--;
+                            kill(pid[i], SIGTERM);
+                            waitpid(pid[i], &(childStatus[i]), 0);
+                            printf("Closed [%d]\n", i);
+                        }
+                        hunterMessage[i].adv_pos.x = prays[closestIndex].x;
+                        hunterMessage[i].adv_pos.y = prays[closestIndex].y;
+
+                        hunterMessage[i].object_count = 0;
+
+                        arrangeObjectPositionFindHunterForHunter(sizeHunter, hunters, hunterMessage, i, mapWidth,
+                                                                 mapHeight);
+                        arrangeObjectPositionFindObstacleForHunter(sizeObstacle, hunters, obstacles, hunterMessage, i,
+                                                                   mapWidth,
+                                                                   mapHeight);
+//
+//                        printServerMessage(hunterMessage[i]);
+//                        printf("--------END [%d]-------\n", i);
+
+
+                        fflush(stdout);
+                        write(fd[i][0], &hunterMessage[i], sizeof(server_message));
+
+                    }
+                }
 
 
             }
         }
 
+        /*
+         * PRAYYYYYYYY
+         */
 
+        for (i = 0; i < sizePray; i++) {
+            if (FD_ISSET(fdPray[i][0], &readset)) {
+
+//                printf("--------BEGIN PRAY [%d]-------\n", i);
+
+
+                read(fdPray[i][0], &receivingMessageFromPray[i], sizeof(ph_message));
+//                printf("Request (%d,%d)\n", receivingMessageFromPray[i].move_request.x,
+//                       receivingMessageFromPray[i].move_request.y);
+                if(receivingMessageFromPray[i].move_request.y == -1 && receivingMessageFromPray[i].move_request.x == -1){
+                    printStructs = (PrintStruct *) realloc(printStructs, (totalSize * sizeof(PrintStruct)));
+
+                    totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter,
+                                                             sizePray,
+                                                             sizeObstacle);
+
+
+                    sortPrintStructs(printStructs, totalSize);
+                    printAll(printStructs, totalSize);
+
+                    printOutput(mapWidth, mapHeight, printStructs, totalSize);
+
+
+                    prayMessage[i].pos.x = prays[i].x;
+                    prayMessage[i].pos.y = prays[i].y;
+
+                    int closestIndex = getIndexFromNearestHunter(prays[i], hunters, sizeHunter);
+                    if (closestIndex == -1) {
+                        openPray[i] = 0;
+                        sizeOpenPray--;
+                        kill(pidPray[i], SIGTERM);
+                        waitpid(pidPray[i], &(childStatusForPray[i]), 0);
+                        printf("Closed [%d]\n", i);
+                    }
+                    prayMessage[i].adv_pos.x = hunters[closestIndex].x;
+                    prayMessage[i].adv_pos.y = hunters[closestIndex].y;
+
+                    prayMessage[i].object_count = 0;
+
+                    arrangeObjectPositionFindPrayForPray(sizePray, prays, prayMessage, i, mapWidth, mapHeight);
+                    arrangeObjectPositionFindObstacleForPray(sizeObstacle, prays, obstacles, prayMessage, i, mapWidth,
+                                                             mapHeight);
+
+//                    printServerMessage(prayMessage[i]);
+//                    printf("--------END [%d]-------\n", i);
+
+                    fflush(stdout);
+                    write(fdPray[i][0], &prayMessage[i], sizeof(server_message));
+                    continue;
+                }
+                int canMoveAnswer = CanMoveNextForPray(i, receivingMessageFromPray[i], prays, printStructs,
+                                                         totalSize);
+                if (canMoveAnswer == 0 || canMoveAnswer == 1) {
+
+
+                    printStructs = (PrintStruct *) realloc(printStructs, (totalSize * sizeof(PrintStruct)));
+
+                    totalSize = getSizeAndArrangePrintStruct(printStructs, hunters, obstacles, prays, sizeHunter,
+                                                             sizePray,
+                                                             sizeObstacle);
+
+
+                    sortPrintStructs(printStructs, totalSize);
+                    printAll(printStructs, totalSize);
+
+                    printOutput(mapWidth, mapHeight, printStructs, totalSize);
+
+
+                    prayMessage[i].pos.x = prays[i].x;
+                    prayMessage[i].pos.y = prays[i].y;
+
+                    int closestIndex = getIndexFromNearestHunter(prays[i], hunters, sizeHunter);
+                    if (closestIndex == -1) {
+                        openPray[i] = 0;
+                        sizeOpenPray--;
+                        kill(pidPray[i], SIGTERM);
+                        waitpid(pidPray[i], &(childStatusForPray[i]), 0);
+                        printf("Closed [%d]\n", i);
+                    }
+                    prayMessage[i].adv_pos.x = hunters[closestIndex].x;
+                    prayMessage[i].adv_pos.y = hunters[closestIndex].y;
+
+                    prayMessage[i].object_count = 0;
+
+                    arrangeObjectPositionFindPrayForPray(sizePray, prays, prayMessage, i, mapWidth, mapHeight);
+                    arrangeObjectPositionFindObstacleForPray(sizeObstacle, prays, obstacles, prayMessage, i, mapWidth,
+                                                             mapHeight);
+
+//                    printServerMessage(prayMessage[i]);
+//                    printf("--------END [%d]-------\n", i);
+
+                    fflush(stdout);
+                    write(fdPray[i][0], &prayMessage[i], sizeof(server_message));
+
+
+                }
+            }
+        }
+
+
+//        printf("sizeOpen=%d, sizeOpenPray=%d, hSize:%d, pSize=%d",sizeOpen,sizeOpenPray,counterHunterSize,counterPraySize);
     }
 
     for (int j = 0; j < counterHunterSize; ++j) {
-        if(open[j])
-        {
+        if (open[j]) {
             open[j] = 0;
-            kill(pid[j],SIGTERM);
-            waitpid(pid[j],&(childStatus[j]),0);
-            printf("All Closed Check\n --------\nClosed [%d]\n",j);
+            kill(pid[j], SIGTERM);
+            waitpid(pid[j], &(childStatus[j]), 0);
+//            printf("All Closed Hunters Check\n --------\nClosed [%d]\n", j);
+        }
+    }
+
+    for (int j = 0; j < counterPraySize; ++j) {
+        if (openPray[j]) {
+            openPray[j] = 0;
+            kill(pidPray[j], SIGTERM);
+            waitpid(pidPray[j], &(childStatusForPray[j]), 0);
+//            printf("All Closed Check\n --------\nClosed [%d]\n", j);
         }
     }
 //    char buff2[255];
