@@ -553,7 +553,7 @@ int main(int argc, char *argv[]) {
             setDelay(getDelay() - 10);
         }
         if (c == '*') {
-            if (getSleeperN()+1 <= antNumber) {
+            if (getSleeperN() + 1 <= antNumber) {
 
                 sem_wait(&sleepMutex[getSleeperN()]);
                 Ant ant = ants[getSleeperN()];
@@ -566,14 +566,17 @@ int main(int argc, char *argv[]) {
             }
         }
         if (c == '/') {
-            setSleeperN(getSleeperN() - 1);
-            Ant ant = ants[getSleeperN()];
-            if (lookCharAt(ant.x, ant.y) == 's') {
-                putCharTo(ant.x, ant.y, '1');
-            } else if (lookCharAt(ant.x, ant.y) == '$') {
-                putCharTo(ant.x, ant.y, 'P');
+            if (getSleeperN() - 1 >= 0) {
+                setSleeperN(getSleeperN() - 1);
+                Ant ant = ants[getSleeperN()];
+                if (lookCharAt(ant.x, ant.y) == 's') {
+                    putCharTo(ant.x, ant.y, '1');
+                } else if (lookCharAt(ant.x, ant.y) == '$') {
+                    putCharTo(ant.x, ant.y, 'P');
+                }
+                sem_post(&sleepMutex[getSleeperN()]);
+
             }
-            sem_post(&sleepMutex[getSleeperN()]);
         }
         usleep(DRAWDELAY);
 
