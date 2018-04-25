@@ -157,8 +157,9 @@ void printPosition(Position p) {
     printf("(x,y)=(%d,%d) \n", p.x, p.y);
 }
 
-void *antOperation(Ant *myAnt) {
+void *antOperation(void * a) {
 //    printf("hello");
+    Ant * myAnt = (Ant *) a;
 
     while (!antFlag) {
         sem_wait(&sleepMutex[myAnt->id]);
