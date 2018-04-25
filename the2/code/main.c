@@ -5,6 +5,7 @@
 
 sem_t mutex[GRIDSIZE][GRIDSIZE];
 sem_t *sleepMutex;
+bool antFlag = false;
 
 typedef struct Ant {
     int x, y;
@@ -157,9 +158,12 @@ void printPosition(Position p) {
 void *antOperation(Ant *myAnt) {
 //    printf("hello");
 
-    while (1) {
+    while (!antFlag) {
         sem_wait(&sleepMutex[myAnt->id]);
         sem_post(&sleepMutex[myAnt->id]);
+        if(!antFlag){
+            break;
+        }
 
 //        sem_wait(&mutex);
 
@@ -446,9 +450,12 @@ void *antOperation(Ant *myAnt) {
 
         usleep(getDelay() * 1000 + (rand() % 5000));
 
+
 //        printf("******************************************************\n");
 
     }
+
+    return 0;
 
 }
 
@@ -459,6 +466,8 @@ int main(int argc, char *argv[]) {
     int antNumber = atoi(antNumberS);
     int foodNumber = atoi(foodNumberS);
     int endTime = atoi(endTimeS);
+
+
 
     sleepMutex = malloc(sizeof(sem_t) * antNumber);
 
@@ -536,16 +545,24 @@ int main(int argc, char *argv[]) {
         pthread_create(tids + k, NULL, antOperation, (void *) ants + k * sizeof(Ant));
     }
 
-
-    while (TRUE) {
-
+    double timeNow = time(NULL);
+    double timeStart = timeNow;
+    while (TRUE ) {
+        timeNow = time(NULL);
+        if(timeNow - timeStart > (double)endTime){
+            antFlag = true;
+            break;
+        }
 
         drawWindow();
 
         c = 0;
         c = getch();
 
-        if (c == 'q' || c == ESC) break;
+        if (c == 'q' || c == ESC){
+            antFlag = true;
+            break;
+        }
         if (c == '+') {
             setDelay(getDelay() + 10);
         }
@@ -587,9 +604,14 @@ int main(int argc, char *argv[]) {
 
     // do not forget freeing the resources you get
     endCurses();
+    for (int m = 0; m < antNumber; ++m) {
+        sem_post(&sleepMutex[m]);
+    }
+
+
 
     for (int k = 0; k < antNumber; ++k) {
-        pthread_join(tids + k, NULL);
+        pthread_join(tids[k], NULL);
 
     }
 
@@ -603,6 +625,15 @@ int main(int argc, char *argv[]) {
     for (int m = 0; m < antNumber; ++m) {
         sem_destroy(&sleepMutex[m]);
     }
+
+
+
+    free(sleepMutex);
+//    free(mutex);
+//    free(tids);
+    free(ants);
+
+
 
 //    pthread_join(tids+0, NULL);
 
