@@ -143,6 +143,8 @@ bool isThereAnyFoodWhileCarrying(Position position, Ant ant) {
     return false;
 }
 
+
+
 void printAntInfo(Ant a) {
     printf("Ant\n");
     printf("(x,y)=(%d,%d) \n", a.x, a.y);
@@ -160,8 +162,8 @@ void *antOperation(Ant *myAnt) {
 
     while (!antFlag) {
         sem_wait(&sleepMutex[myAnt->id]);
-        sem_post(&sleepMutex[myAnt->id]);
-        if(!antFlag){
+
+        if(antFlag){
             break;
         }
 
@@ -219,6 +221,29 @@ void *antOperation(Ant *myAnt) {
                 // not found food just move
 //                printf("there is no food of this location\n");
                 do {
+                    if(antFlag) {
+                        break;
+                    }
+
+                    bool checkThereIsEmptyCell = false;
+                    for (int i = 0; i < 3; ++i) {
+                        for (int j = 0; j < 3; ++j) {
+                            if(i == 1 && j == 1)
+                                break;
+                            antNewPosition = getPosition(i, j, *myAnt);
+                            if (!isInArea(antNewPosition.x, antNewPosition.y))
+                                continue;
+
+                            if (!isThereEmptyCell(antNewPosition.x, antNewPosition.y))
+                                continue;
+
+                            checkThereIsEmptyCell = true;
+
+                        }
+                    }
+
+                    if(!checkThereIsEmptyCell)
+                        break;
                     x = getRandomNo(column);
                     y = getRandomNo(column);
 //                        printf("getRandom->(x,y)=(%d,%d)\n", x, y);
@@ -324,6 +349,29 @@ void *antOperation(Ant *myAnt) {
                 if (isInArea(myAnt->x, myAnt->y)) {
 
                     do {
+                        if(antFlag){
+                            break;
+                        }
+
+                        bool checkThereIsEmptyCell = false;
+                        for (int i = 0; i < 3; ++i) {
+                            for (int j = 0; j < 3; ++j) {
+                                if(i == 1 && j == 1)
+                                    break;
+                                antNewPosition = getPosition(i, j, *myAnt);
+                                if (!isInArea(antNewPosition.x, antNewPosition.y))
+                                    continue;
+
+                                if (!isThereEmptyCell(antNewPosition.x, antNewPosition.y))
+                                    continue;
+
+                                checkThereIsEmptyCell = true;
+
+                            }
+                        }
+
+                        if(!checkThereIsEmptyCell)
+                            break;
                         x = getRandomNo(column);
                         y = getRandomNo(column);
 //                        printf("getRandom->(x,y)=(%d,%d)\n", x, y);
@@ -366,6 +414,30 @@ void *antOperation(Ant *myAnt) {
 
 
                 do {
+                    if(antFlag){
+                        break;
+                    }
+
+                    bool checkThereIsEmptyCell = false;
+                    for (int i = 0; i < 3; ++i) {
+                        for (int j = 0; j < 3; ++j) {
+                            if(i == 1 && j == 1)
+                                break;
+                            antNewPosition = getPosition(i, j, *myAnt);
+                            if (!isInArea(antNewPosition.x, antNewPosition.y))
+                                continue;
+
+                            if (!isThereEmptyCell(antNewPosition.x, antNewPosition.y))
+                                continue;
+
+                            checkThereIsEmptyCell = true;
+
+                        }
+                    }
+
+                    if(!checkThereIsEmptyCell)
+                        break;
+
                     x = getRandomNo(column);
                     y = getRandomNo(column);
 //                        printf("getRandom->(x,y)=(%d,%d)\n", x, y);
@@ -412,6 +484,31 @@ void *antOperation(Ant *myAnt) {
             antOldPosition.x = myAnt->x;
             antOldPosition.y = myAnt->y;
             do {
+                if(antFlag){
+                    break;
+                }
+
+
+                bool checkThereIsEmptyCell = false;
+                for (int i = 0; i < 3; ++i) {
+                    for (int j = 0; j < 3; ++j) {
+                        if(i == 1 && j == 1)
+                            break;
+                        antNewPosition = getPosition(i, j, *myAnt);
+                        if (!isInArea(antNewPosition.x, antNewPosition.y))
+                            continue;
+
+                        if (!isThereEmptyCell(antNewPosition.x, antNewPosition.y))
+                            continue;
+
+                        checkThereIsEmptyCell = true;
+
+                    }
+                }
+
+                if(!checkThereIsEmptyCell)
+                    break;
+
                 x = getRandomNo(column);
                 y = getRandomNo(column);
 //                        printf("getRandom->(x,y)=(%d,%d)\n", x, y);
@@ -448,11 +545,11 @@ void *antOperation(Ant *myAnt) {
         }
 //        sem_post(&mutex);
 
+        sem_post(&sleepMutex[myAnt->id]);
         usleep(getDelay() * 1000 + (rand() % 5000));
 
 
 //        printf("******************************************************\n");
-
     }
 
     return 0;
@@ -554,8 +651,16 @@ int main(int argc, char *argv[]) {
             break;
         }
 
+        for (int k = getSleeperN(); k < antNumber; ++k) {
+            sem_wait(&sleepMutex[k]);
+        }
+
         drawWindow();
 
+
+        for (int k = getSleeperN(); k < antNumber; ++k) {
+            sem_post(&sleepMutex[k]);
+        }
         c = 0;
         c = getch();
 
@@ -575,7 +680,7 @@ int main(int argc, char *argv[]) {
                 sem_wait(&sleepMutex[getSleeperN()]);
                 Ant ant = ants[getSleeperN()];
                 if (lookCharAt(ant.x, ant.y) == '1') {
-                    putCharTo(ant.x, ant.y, 's');
+                    putCharTo(ant.x, ant.y, 'S');
                 } else if (lookCharAt(ant.x, ant.y) == 'P') {
                     putCharTo(ant.x, ant.y, '$');
                 }
@@ -586,7 +691,7 @@ int main(int argc, char *argv[]) {
             if (getSleeperN() - 1 >= 0) {
                 setSleeperN(getSleeperN() - 1);
                 Ant ant = ants[getSleeperN()];
-                if (lookCharAt(ant.x, ant.y) == 's') {
+                if (lookCharAt(ant.x, ant.y) == 'S') {
                     putCharTo(ant.x, ant.y, '1');
                 } else if (lookCharAt(ant.x, ant.y) == '$') {
                     putCharTo(ant.x, ant.y, 'P');
